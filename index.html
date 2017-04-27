@@ -1,1 +1,329 @@
-hello world 
+#Linux 用户管理 与 文件权限
+
+###用户组操作
+1.groupadd命令
+
+	groupadd [-g -o] gid  group
+	各个选项具体含义如下：
+	-g：指定新建用户组的GID号，该GID号必须唯一，不能和其它用户组的GID号重复。
+	-o：一般与-g选项同时使用，表示新用户组的GID可以与系统已有用户组的GID相同。
+
+	//新增group sheyou gid=1020
+	groupadd -g 1020 sheyou
+	//查看组信息
+	more /etc/group|grep  linuxfans
+	//创建了一个用户user1，同时指定user1的主用户组为group1，附加用户组为group2和group3
+	useradd -g group1 -G group2,group3 user1
+	//用户查看
+	more /etc/group|grep user1
+	//设置密码
+	passwd user1
+
+2.newgrp命令
+
+	//用户切换组
+	newgrp group2
+
+3.groupdel命令
+
+	当需要从系统上删除用户组时，可用groupdel指令来完成这项工作。如果该用户组中仍包括某些用户，则必须先删除这些用户后，然后才能删除用户组。
+	例如：删除linuxfans这个用户组
+	groupdel  linuxfans
+
+
+###用户操作
+
+1．useradd建立用户的过程
+
+	useradd不加任何参数创建用户时，系统首先读取添加用户配置文件/etc/login.defs和/etc/default/useradd，根据这两个配置文件中定
+	义的规则添加用户，然后会向/etc/passwd和/etc/group文件添加用户和用户组记录，同时/etc/passwd和/etc/group对应的加密文件也会
+	自动生成记录，接着系统会自动在/etc/default/useradd文件设定的目录下建立用户主目录，最后复制/etc/skel目录中的所有文件到新用户
+	的主目录中，这样一个新的用户就建立完成了。
+
+2．useradd的使用语法
+
+	useradd语法的一般格式为：
+
+	useradd  [-u uid [-o]] [-g group] [-G group,...]
+	                [-d home] [-s shell] [-c comment]
+	                [-f inactive] [-e expire ] name
+	各个选项具体含义如下：
+	 -u uid：即用户标识号，此标识号必须唯一。
+	 -g group：指定新建用户登录时所属的默认组，或者叫主组。此群组必须已经存在。
+	 -G group：指定新建用户的附加组，此群组必须已经存在。附加组是相对与主组而言的，当一个用户同时是多个组中的成员时，
+				登录时的默认组成为主组，而其它组称为附加组。
+	 -d home：指定新建用户的默认主目录，如果不指定，系统会在/etc/default/useradd文件指定的目录下创建用户主目录。
+	 -s shell：指定新建用户使用的默认shell，如果不指定，系统以/etc/default/useradd文件中定义的shell作为新建用户的默认shell。
+	 -c comment：对新建用户的说明信息。
+	 -f inactive：指定帐号过期多长时间后永久停用。当值为0时帐号则立刻被停权。而当值为-1时则关闭此功能，预设值为-1
+	 -e expire：指定用户的帐号过期时间，日期的指定格式为MM/DD/YY。
+	 name：指定需要创建的用户名。
+
+3．usermod的使用语法
+
+	usermod用来修改用户的账户属性信息，使用语法如下：
+	usermod  [-u uid [-o]] [-g group] [-G group,...]
+                [-d 主目录 [-m]] [-s shell] [-c 注释] [-l 新名称]
+                [-f 失效日期] [-e 过期日期][-L|-U] Name
+	各个选项具体含义如下：
+	 -u uid：指定用户新的UID值，此值必须为唯一的ID值，除非用-o选项。
+	 -g group：修改用户所属的组名为新的用户组名，此用户组名必须已经存在。
+	 -G group：修改用户所属的附加组。
+	 -d 主目录：修改用户登录时的主目录。
+	 -s shell：修改用户登录系统后默认使用的shell
+	 -c 注释：修改用户的注释信息。
+	 -l 新名称：修改用户帐号为新的名称。
+	 -f 失效日：帐号过期多少天后永久禁用。
+	 -e 过期日：增加或修改用户账户的过期时间。
+	 -L：锁定用户密码，使密码无效。
+	 -U：解除密码锁定。
+	 Name：要修改属性的系统用户。
+
+4．userdel的使用语法
+
+	Userdel用来删除一个用户，若指定“-r”参数不但删除用户，同时删除用户的主目录以及目录下的所有文件。语法格式为：
+	userdel [-r][用户帐号]
+
+5．应用举例
+
+1）添加一个用户mylinux，指定所属的主用户组为fanslinux，附加用户组为linuxfans，同时指定用户的默认主目录为/opt/mylinux
+
+	[root@localhost ~]# useradd -g fanslinux -G linuxfans -d /opt/mylinux mylinux
+	[root@localhost ~]# more /etc/passwd|grep mylinux
+	mylinux:x:523:1030::/opt/mylinux:/bin/bash
+	[root@localhost ~]# more /etc/group|grep mylinux
+	linuxfans:x:1020:mylinux
+
+ 2）添加一个用户test_user，指定UID为686，默认的shell为/bin/csh，让其归属为用户组linuxfans和fanslinux，同时添加对此用户的描述
+
+	[root@localhost ~]# useradd  -u 686 -s /bin/csh  -G linuxfans,fanslinux  -c "This is test user" test_user
+	[root@localhost ~]# more /etc/passwd|grep test_user
+	test_user:x:686:686:This is test user:/home/test_user:/bin/csh
+	[root@localhost ~]# more /etc/group|grep test_user  
+	fanslinux:x:1030:test_user
+	linuxfans:x:1020:mylinux,test_user
+	test_user:x:686:
+
+ 3）修改用户test_user的主用户组为新建的组test_group1，同时修改test_user的附加组为linuxfans和root，最后修改test_user的默认登录shell为/bin/bash
+
+	[root@localhost ~]# groupadd test_group1  #添加一个新的用户组
+	[root@localhost ~]# more /etc/group|grep test_group1 #显示新增用户组的信息
+	test_group1:x:1031:
+
+	[root@localhost ~]# usermod -g test_group1 -G linuxfans,root -s /bin/bash test_user
+	[root@localhost ~]# more /etc/passwd|grep test_user   #从输出可知，用户的属性已经更改                                        
+	test_user:x:686:1031:This is test user:/home/test_user:/bin/bash
+	[root@localhost ~]# more /etc/group|grep test_user   #从输出可知，用户组的属性也同步更改   
+	root:x:0:root,test_user
+	linuxfans:x:1020:mylinux,test_user
+	test_user:x:686:
+
+4）如何锁定、解除用户密码
+
+1.对test_user和mylinux用户设置密码
+
+	[root@localhost ~]# passwd  test_user
+	Changing password for user test_user.
+	New UNIX password: 
+	Retype new UNIX password: 
+	passwd: all authentication tokens updated successfully.
+	[root@localhost ~]# passwd  mylinux
+	Changing password for user mylinux.
+	New UNIX password: 
+	Retype new UNIX password: 
+	passwd: all authentication tokens updated successfully.
+
+2.通过su命令切换到mylinux用户下，然后在mylinux下再次切换到test_user用户下，这里的切换用户是为了说明一个问题：
+从超级用户root切换到普通用户下，是不需要输入普通用户密码的，系统也不会去验证密码。
+但普通用户之间切换是需要密码验证的。
+
+	[root@localhost ~]# su – mylinux  #通过su命令切换到mylinux用户下
+	[mylinux@localhost ~]$ whoami      #用whoami命令查看当前用户
+	mylinux
+	[mylinux@localhost ~]$ su - test_user  #这里是从mylinux用户下切换到test_user用户下，需要输入密码
+	Password: 
+	[mylinux@localhost ~]$ whoami          #成功切换到test_user用户下
+	test_user
+
+3.在root用户下执行usermod锁定test_user的密码，测试test_user是否还能登录，从下面可以看出，密码锁定后，出现登录失败。
+
+	[root@localhost ~]# usermod -L test_user  #锁定test_user用户的密码
+	[root@localhost ~]# su - mylinux  
+	[mylinux@localhost ~]$ whoami
+	mylinux
+	[mylinux@localhost ~]$ su - test_user  #这里输入的密码是正确的，但是提示密码错误，因为密码被锁定了
+	Password: 
+	su: incorrect password
+	[mylinux@localhost ~]$ whoami
+	mylinux
+
+4.test_user解除密码锁定，登录正常。
+
+	[root@localhost ~]# usermod -U test_user  #解除密码锁定
+	[root@localhost ~]# su – mylinux
+	[mylinux@localhost ~]$ whoami
+	mylinux
+	[mylinux@localhost ~]$ su - test_user
+	Password: 
+	[test_user@localhost ~]$ whoami  #密码锁定解除后，test_user用户可以登录系统
+	test_user
+
+###文件与权限的设定
+
+所谓的文件权限，是指对文件的访问权限，包括对文件的读、写、删除、执行等，在linux下，每个用户都具有不同的权限，普通用户只能在自己的主目录下进行写操作，而在主目录之外，普通用户只能进行查找、读取操作，如何处理好文件权限和用户之间的关系，是本节讲述的重点。
+
+#####一 查看文件的权限属性
+使用ls命令就可以查看文件的以及目录的权限信息，不带任何参数的ls命令只显示文件名称，通过“ls –al”可以显示文件或者目录的权限信息，看下面的输出：
+
+	[root@localhost oracle]# ls -al
+	total 92
+	drwxr-xr-x   3 oracle oinstall  4096 Oct 30  2006 admin
+	drwxr-xr-x   2 oracle oinstall  4096 Oct 23 18:22 bin
+	-rwxr-xr-x   1 root   root      3939 Mar 20  2008 .createtablespace.pl
+	drwxr-xr-x   3 oracle oinstall  4096 Oct 30  2006 flash_recovery_area
+	drwxr-xr-x   2 oracle oinstall  4096 Jun 25 15:18 install
+	drwx------   2 oracle oinstall 16384 Jun 25 01:10 lost+found
+	drwxr-xr--   3 oracle oinstall  4096 Oct 30  2008 oradata
+	drwxr-xr-x   6 oracle oinstall  4096 Oct 30  2006 oraInventory
+	drwxr-xr-x   3 oracle dba       4096 Oct 28  2006 product
+
+ 为了能更详细的介绍上面输出中每个属性的含义，下图列出了oradata文档每列代表的含义：
+
+ ![](http://images.cnblogs.com/cnblogs_com/dawnheaven/935538/t_19312630B-1.png)
+ 
+下面通过具体的实例讲述每列代表的含义。  
+1．第一列显示文档类型与执行权限，有十个字符组成，分为4个部分，下面将文档oradata权限分解，如下图所示
+
+![](http://images.cnblogs.com/cnblogs_com/dawnheaven/935538/t_1931262938-2.png)
+
+接着对每个部分解释如下：  
+ 文档类型部分：  
+当为“d”时，表示目录；当为“l”时表示软链接；当为“-”时表示文件；当为“c”时表示串行端口字符设备文件；当为“b”时表示可供存储的块设备文件。由此可知，oradata是一个目录。  
+在接下来的三个部分中，三个字符为一组，每个字符的含义为：“r”表示只读，即read；“w”表示可写，即write；“x”表示可执行，即execute；“-”表示无此权限，即为空。  
+ User部分：  
+第二部分是对文档所有者（user）权限的设定，“rwx”表示用户对oradata目录有读、写和执行的所有权限。  
+ Group部分：  
+第三部分是对文档所属用户组（group）权限的设定，“r-x”表示用户组对oradata目录有读和执行的权限，但是没有写的权限。  
+ Others部分：  
+第四部分是对文档拥有者之外的其它用户权限的设定，“r--”表示其它用户或用户组对oradata目录只有读的权限。
+文档的操作权限是可以指定和更改的，通过chmod命令即可更改文件或者目录的权限，这个将在下节讲述。  
+
+2．第二列显示的是文档的连结数，这个连结数就是硬链接的概念，即多少个文件指向同一个索引节点,举例如下： 
+ 
+	[root@localhost ~]#ls -al
+	-rw-r--r--   1 root root 60151 Oct 25 01:01 install.log
+	[root@localhost ~]#ln install.log  install.log1
+	[root@localhost ~]#ls –al  install.log
+	-rw-r--r--   2 root root 60151 Oct 25 01:01 install.log
+	[root@localhost ~]#ln install.log  install.log2
+	[root@localhost ~]#ls –al  install.log
+	-rw-r--r--   3 root root 60151 Oct 25 01:01 install.log
+
+从上面可以看出，install.log文件原始的连结数是1，然后做了两个硬链接操作，install.log文件的连接数变为3，这就是连接数的含义。
+
+3．第三列显示了文档所属的用户和用户组，也就是文档是属于哪个用户以及哪个用户组所有，例如上面的oradata目录，所属的用户为oracle，所属的组为oinstall组。文件所属的用户和组是可以更改的，通过chown命令就可以修改文档的用户属性。
+
+4．第四列显示的是文档的大小，默认显示的是以bytes为单位，但是也可以通过命令的参数修改显示的单位，例如可以通过“ls -sh”组合人性化的显示文档的大小。对于目录，通常只显示文件系统默认block的大小。
+
+5．第五列显示文档最后一次的修改日期，通常以月、日、时、分的方式显示，如果文档修改时间距离现在已经很远了，会使用月、日、年的方式显示。
+
+6．第六列显示的是文档名称，linux下以“.”开头的文件是隐藏文件，同理以“.”开头的目录是隐藏目录，隐藏文档只有通过ls命令的“-a”选项才能显示。
+例如上面的.createtablespace.pl文件就是一个隐藏文件。
+
+#####二 利用chown改变属主和属组
+
+chown就是change owner的意思，主要作用就是改变文件或者目录的所有者，而所有者包含用户和用户组，其实chown就是对文件所属的用户和用户组进行的一系列设置。
+
+	chown使用的一般语法为：
+	[root@localhost ~]#chown [-R] 用户名称 文件或目录
+	[root@localhost ~]#chown [-R] 用户名称:用户组组名称 文件或目录
+
+参数说明：
+
+	-R : 进行递归式的权限更改，也就是将目录下的所有文件、子目录都更新成为指定的用户组权限。常常用于变更某一目录的情况。
+	注意，在执行操作前，确保指定的用户以及用户组在系统中是存在的。
+
+例子1：修改隐藏文件“.createtablespace.pl”的所属用户为oracle，所属的用户组为oinstall，操作如下：
+
+	[root@localhost ~]#chown oracle:oinstall .createtablespace.pl
+	[root@localhost ~]#ls -al  .createtablespace.pl
+	-rwxr-xr-x   1 oracle   oinstall      3939 Mar 20  2008 createtablespace.pl
+	注意，这里要确保oracle用户和oinstall组已经存在。
+
+例子2：修改oradata目录以及目录下的所有文件的所属用户为root，用户组为dba组，
+
+	[root@localhost ~]#chown -R root:dba oradata
+	drwxr-xr--   3 root dba   4096 Oct 30  2006 oradata
+
+#####三 利用chmod改变访问权限
+
+chmod用于改变文件或目录的访问权限。该命令有两种用法。一种是包含字母和操作符表达式的字符设定法；另一种是包含数字的数字设定法。
+
+1. 字符设定法
+使用语法为：
+
+	chmod [who] [+ | - | =] [mode] 文件名
+
+命令中各选项的含义如下：
+
+	 who表示操作对象，可以是下面字母中的任何一个或者它们的组合。
+	 u 表示“用户（user）”，即文件或目录的所有者。
+	 g 表示“用户组（group）”，即文件或目录所属的用户组。
+	 o 表示“其他（others）用户”。 
+	 a 表示“所有（all）用户”。它是系统默认值。
+	 操作符号含义如下：
+	 “+”表示添加某个权限。
+	 “-”表示取消某个权限。
+	 “=”表示赋予给定的权限，同时取消文档以前的所有权限。
+	 mode表示可以执行的权限，可以是“r“（只读）、“w”（可写）和“x”（可执行），以及它们的组合。
+	 文件名可以是以空格分开的文件列表，支持通配符。
+
+2．举例
+
+ 修改install.log文件，使其所有者具有所有权限，用户组和其它用户具有只读权限：
+
+	[root@localhost ~]# ls -al install.log
+	-rw------  1 root root 60151 Oct 17 16:11 install.log
+	[root@localhost ~]# chmod u=rwx,g+r,o+r install.log    
+	[root@localhost ~]# ls -al install.log             
+	-rwxr--r--  1 root root 60151 Oct 17 16:11 install.log
+	 修改/etc/fstab文件的权限，使其所有者具有读写权限，用户组和其它用户没有任何权限：
+	[root@localhost ~]# ll /etc/fstab          
+	-rwxr--r--  1 root root 1150 Oct 23 09:30 /etc/fstab
+	[root@localhost ~]# chmod u-x,g-r,o-r /etc/fstab      
+	[root@localhost ~]# ll /etc/fstab                
+	-rw-------  1 root root 1150 Oct 23 09:30 /etc/fstab
+
+3．数字设定法
+
+首先了解一下用数字表示属性的含义，0表示没有任何权限，1表示有可执行权限，与上面字符表示法中的“x”有相同的含义。2表示有可写权限，与“w”对应，4表示有可读权限，对应与“r“。  
+如果想让文件的属主拥有读和写的权限，可以通过4（可读）+2（可写）=6（可读可写）的方式来实现，那么用数字6就表示拥有读写权限。  
+使用语法：  
+chmod [属主权限的数字组合] [用户组权限的数字组合] [其它用户权限的数字组合] 文件名  
+下图展示了数字设定法的实现原理：  
+ 
+![](http://images.cnblogs.com/cnblogs_com/dawnheaven/935538/t_19312633O-3.png)
+
+上图数字设定法含义剖析  
+从图中可以清晰的看出，“755”组合的代表含义，第一个“7”显示了文件所有者的权限，是通过4（r）+2（w）+1（x）=7（rwx）而得到的。第二个“5”显示了文件所属组的权限，是通过4（r）+0（-）+1（x）=5（rx）而得到的，同理最后一个“5”也有类似的含义。
+
+举例：
+
+某个文件mysqltuner.pl的默认权限为600，即“-rw-------”，表示只有此文件的所有者（User）拥有读写权限，其它用户（Others）和组（Group）没有对此文件访问的任何权限。
+
+首先修改此文件的权限为644，即“-rw-r--r--”，表示此文件的所有者（User）拥有读写权限，而其它用户（Others）和组（Group）仅仅拥有读的权限，操作如下：
+
+	[linux1@localhost ~]$ ls -al mysqltuner.pl 
+	-rw------- 1 linux1 linux1 38063 Oct 26 07:49 mysqltuner.pl
+	[linux1@localhost ~]$ chmod 644  mysqltuner.pl
+	[linux1@localhost ~]$ ls -al mysqltuner.pl     
+	-rw-r--r-- 1 linux1 linux1 38063 Oct 26 07:49 mysqltuner.pl
+
+然后接着修改mysqltuner.pl文件的权限为755，即“-rwxr-xr-x”，表示此文件的所有者（User）拥有读写执行权限，而其它用户（Others）和组（Group）拥有对此文件的读和执行权限。
+
+	[linux1@localhost ~]$ chmod 755  mysqltuner.pl 
+	[linux1@localhost ~]$ ls -al mysqltuner.pl     
+	-rwxr-xr-x 1 linux1 linux1 38063 Oct 26 07:49 mysqltuner.pl
+
+
+###参照博客 [浅谈Centos用户权限管理](http://www.centoscn.com/CentOS/Intermediate/2013/0803/929.html)
